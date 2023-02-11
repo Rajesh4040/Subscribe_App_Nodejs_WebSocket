@@ -1,0 +1,69 @@
+<h1>Subscribe, Unsubscribe,count Subscribers using WebSocket in Node.js</h1>
+<p id="time"></p>
+<pre id="messages" style="height: 28px; overflow: scroll"></pre>
+<pre id="othermessages" style="height: 82px; overflow: scroll"></pre>
+<input type="text" id="messageBox" placeholder="Type your message here"
+    style="display: block; width: 100%; margin-bottom: 10px; padding: 10px;" />
+<button id="send" title="Send Message!" style="width: 100%; height: 30px;">Send Message</button>
+
+<script>
+    (function () {
+        const sendBtn = document.querySelector('#send');
+        const messages = document.querySelector('#messages');
+        const messageBox = document.querySelector('#messageBox');
+        let ws;
+
+        function showHeartBeatMessage(message) {
+            messages.textContent = `${message}`;
+            messages.scrollTop = messages.scrollHeight;
+        }
+        function showOtherMessage(message) {
+            othermessages.textContent = `${message}`;
+            othermessages.scrollTop = messages.scrollHeight;
+            messageBox.value = '';
+        }
+
+
+        function init() {
+            if (ws) {
+                ws.onerror = ws.onopen = ws.onclose = null;
+                ws.close();
+            }
+
+            ws = new WebSocket('ws://localhost:6969/');
+            ws.onopen = () => {
+                console.log('Connection opened!');
+            }
+            ws.onmessage = ({ data }) => {
+                const _checkType = JSON.parse(data);
+                el = document.getElementById('time');
+                el.innerHTML = 'Time on the Server: ' + _checkType.updatedAt;
+                if (_checkType.type == "Heatbeat") {
+                    showHeartBeatMessage(data)
+                }
+                else {
+                    othermessages.textContent = `${data}`;
+                    othermessages.scrollTop = othermessages.scrollHeight;
+                }
+
+            };
+            ws.onclose = function () {
+                ws = null;
+            }
+        }
+
+        sendBtn.onclick = function () {
+            if (!ws) {
+                showOtherMessage("No WebSocket connection :Please refresh the screen(");
+                showHeartBeatMessage("No WebSocket connection :Please refresh the screen(");
+                return;
+            }
+            ws.send(messageBox.value);
+            showOtherMessage(messageBox.value);
+            messageBox.value = '';
+
+        }
+
+        init();
+    })();
+</script>
